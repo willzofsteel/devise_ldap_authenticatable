@@ -3,7 +3,7 @@ module Devise
     class Connection
       attr_reader :ldap, :login
 
-      def initialize(params = {})
+      def initialize(params = {}, base)
         if ::Devise.ldap_config.is_a?(Proc)
           ldap_config = ::Devise.ldap_config.call
         else
@@ -16,7 +16,11 @@ module Devise
         @ldap = Net::LDAP.new(ldap_options)
         @ldap.host = ldap_config["host"]
         @ldap.port = ldap_config["port"]
-        @ldap.base = ldap_config["base"]
+
+        #http://stackoverflow.com/questions/22180459/devise-ldap-authenticatable-using-multiple-ou-locations
+        #@ldap.base = ldap_config["base"]
+        @ldap.base = base
+
         @attribute = ldap_config["attribute"]
         @allow_unauthenticated_bind = ldap_config["allow_unauthenticated_bind"]
 

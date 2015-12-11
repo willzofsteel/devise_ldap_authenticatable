@@ -6,13 +6,24 @@ module Devise
     
     module Adapter
       def self.valid_credentials?(login, password_plaintext)
+        #http://stackoverflow.com/questions/22180459/devise-ldap-authenticatable-using-multiple-ou-locations
+        #
+        ldap_config = YAML.load(ERB.new(File.read(::Devise.ldap_config || "#{Rails.root}/config/ldap.yml")).result)[Rails.env]
+        bases = ldap_config["base"]
+
         options = {:login => login,
                    :password => password_plaintext,
                    :ldap_auth_username_builder => ::Devise.ldap_auth_username_builder,
                    :admin => ::Devise.ldap_use_admin_to_bind}
 
-        resource = Devise::LDAP::Connection.new(options)
-        resource.authorized?
+        bases.each do |base|
+          resource = Devise::LDAP::Connection.new(options)
+          if resource.authorized?
+            return true
+          end
+        end
+
+        false
       end
 
       def self.update_password(login, new_password)
